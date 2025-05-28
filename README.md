@@ -10,15 +10,43 @@ pip install secnex-notion-webhook-server
 
 ## Usage
 
+### Create a new webhook server with only the webhook handler
+
 ```python
-from notion_webhook import WebhookServer, ServerHandler, NotionWebhookHandler
+from notion_webhook.server import WebhookServer
 
 server = WebhookServer()
-server.run(ServerHandler())
-
-handler = NotionWebhookHandler(lambda data: print(data))
-server.webhook(handler)
+server.start()
 ```
+
+### Create a new webhook server with a custom handler
+
+```python
+from notion_webhook.server import Server, Handler, WebhookHandler
+from notion_webhook.db import TokenDatabase
+
+db = TokenDatabase()
+
+if db.check_first_run():
+    token_id, token = db.create_token()
+    print(token)
+
+handler = Handler(WebhookHandler(db).webhook_handler)
+
+handlers = {
+    "/webhook": handler
+}
+
+server = Server(
+    addr=os.getenv("HOST", "0.0.0.0"),
+    port=int(os.getenv("PORT", 8000)),
+    handlers=handlers,
+    app_name=os.getenv("APP_NAME", "NotionWebhookServer")
+)
+server.start()
+```
+
+_You find the example in the [examples](examples) folder._
 
 ## License
 
